@@ -1,0 +1,57 @@
+<script>
+// this is a first script that reads params from url store in cookie and make session requesr to the database "https://db.your-domain.com/se/"
+jQuery(document).ready(function($) {
+
+    // --- Helper: get cookie ---
+    function getCookie(name) {
+        let m = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return m ? decodeURIComponent(m[2]) : null;
+    }
+
+    // --- Helper: set cookie ---
+    function setCookie(name, value, days = 30) {
+        let d = new Date();
+        d.setTime(d.getTime() + (days*24*60*60*1000));
+        document.cookie = name + "=" + encodeURIComponent(value) + ";expires=" + d.toUTCString() + ";path=/";
+    }
+
+    // --- Parse URL parameters ---
+    let urlParams = new URLSearchParams(window.location.search);
+
+    let gclidParam = urlParams.get("gclid");
+    let gclidCookie = getCookie("gclid");
+    let seCookie = getCookie("se");
+	
+    // --- Condition: if no 'se' cookie OR gclid changed ---
+    if (!seCookie || (gclidParam && gclidParam !== gclidCookie)) {
+
+        // Save all params into cookies
+        urlParams.forEach((value, key) => {
+            setCookie(key, value, 30);
+        });
+
+        // ✅ Save current page path (without domain & params) into cookie
+        let pagePath = window.location.pathname;
+        setCookie("page_url", pagePath, 30);
+
+        let postbackUrl = "https://db.your-domain.com/se/";
+
+        // Append all URL params + page_url to postback request
+        let params = new URLSearchParams(urlParams);
+        params.set("page_url", pagePath);
+
+        if (params.toString()) {
+            postbackUrl += "?" + params.toString();
+        }
+
+        $.get(postbackUrl, function(response) {
+            if (response) {
+                setCookie("se", response, 30); // store session in cookie
+            }
+        }).fail(function(err) {
+            console.error("Postback failed:", err);
+        });
+    }
+
+});
+</script>
