@@ -1,6 +1,8 @@
 <?php
 
+//mysql credentials
+
 $host = 'localhost';
-$user = 'u';
-$pass = 'p';
-$dbname = 'd';
+$user = 'user';
+$pass = 'pass';
+$dbname = 'dbname';
