@@ -1,0 +1,55 @@
+<script>
+// code send postback with brand click event , if you want prevent iphone pop ask chat gpt 
+// add class cta to the link wrapper html element 
+jQuery(document).ready(function($) {
+
+    $('.cta a').on('click', function(e) {
+        e.preventDefault();
+
+        // --- Get CTA URL from the clicked element ---
+        var ctaUrl = $(this).attr('href');
+
+        // --- Helper: get cookie value ---
+        function getCookie(name) {
+            var m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+            return m ? decodeURIComponent(m[1]) : "";
+        }
+
+        // --- Read values from cookies ---
+        var params = {
+            gclid: getCookie("gclid"),
+            campaignid: getCookie("campaignid"),
+            page_url: getCookie("page_url"),
+            adgroupid: getCookie("adgroupid"),
+            keyword: getCookie("keyword"),
+            device: getCookie("device"),
+            source: getCookie("source"),
+            event_id: getCookie("se")
+        };
+
+        // --- Build postback URL ---
+        var postbackUrl = "https://db.your-domain.com/in/?" +
+            "record_source=site" +
+            "&event_type=brandclick" +
+            "&gclid=" + encodeURIComponent(params.gclid) +
+            "&campaignid=" + encodeURIComponent(params.campaignid) +
+            "&page_url=" + encodeURIComponent(params.page_url) +
+            "&adgroupid=" + encodeURIComponent(params.adgroupid) +
+            "&keyword=" + encodeURIComponent(params.keyword) +
+            "&device=" + encodeURIComponent(params.device) +
+            "&source=" + encodeURIComponent(params.source) +
+            "&event_id=" + encodeURIComponent(params.event_id);
+
+        // --- Fire postback ---
+        $.ajax({
+            url: postbackUrl,
+            type: 'GET',
+            complete: function() {
+                // --- Open CTA link in new tab after postback ---
+                window.open(ctaUrl, '_blank');
+            }
+        });
+    });
+
+});
+</script>

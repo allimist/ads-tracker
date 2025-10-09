@@ -32,12 +32,18 @@ jQuery(document).ready(function($) {
 
         // ✅ Save current page path (without domain & params) into cookie
         let pagePath = window.location.pathname;
+
+        // Remove leading & trailing slash if exist
+        pagePath = encodeURIComponent(pagePath.replace(/^\/|\/$/g, ''));
+
         setCookie("page_url", pagePath, 30);
 
         let postbackUrl = "https://db.your-domain.com/se/";
 
         // Append all URL params + page_url to postback request
         let params = new URLSearchParams(urlParams);
+
+        // URL encode page_url
         params.set("page_url", pagePath);
 
         if (params.toString()) {
