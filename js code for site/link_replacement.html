@@ -1,0 +1,32 @@
+<script>
+// this is a second script that replace tokens from partner links to tokens from the cookie like {gclid}, {landed get param to site} etc ...
+// in case of elementor %7Bgclid%7D, %7Blanded get param to site%7D
+jQuery(document).ready(function($) {
+
+    // --- Helper: get cookie ---
+    function getCookie(name) {
+        let m = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return m ? decodeURIComponent(m[2]) : null;
+    }
+
+    // --- Replace tokens in links (encoded form: %7Btoken%7D) ---
+    $('a[href*="%7B"]').each(function() {
+        let $link = $(this);
+        let href = $link.attr('href');
+
+        // Find all encoded {token} occurrences like %7Bgclid%7D
+        let matches = href.match(/%7B([^%]+)%7D/g);
+
+        if (matches) {
+            matches.forEach(function(token) {
+                let cookieName = token.replace(/%7B|%7D/g, ""); // strip %7B and %7D
+                let cookieValue = getCookie(cookieName) || "";
+                href = href.replace(token, cookieValue);
+            });
+
+            $link.attr('href', href); // update link
+        }
+    });
+
+});
+</script>
