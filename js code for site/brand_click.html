@@ -1,13 +1,22 @@
 <script>
 // code send postback with brand click event , if you want prevent iphone pop ask chat gpt 
 // add class cta to the link wrapper html element 
+// update var postbackUrl = "https://db.your-domain.com/in/?"    
 jQuery(document).ready(function($) {
 
     $('.cta a').on('click', function(e) {
         e.preventDefault();
 
-        // --- Get CTA URL from the clicked element ---
         var ctaUrl = $(this).attr('href');
+
+        // --- ✅ Extract "brand" from CTA URL query parameter ---
+        var brandParam = "";
+        try {
+            var urlObj = new URL(ctaUrl, window.location.origin);
+            brandParam = urlObj.searchParams.get("brand") || "";
+        } catch (err) {
+            console.error("Invalid CTA URL:", err);
+        }
 
         // --- Helper: get cookie value ---
         function getCookie(name) {
@@ -31,6 +40,7 @@ jQuery(document).ready(function($) {
         var postbackUrl = "https://db.your-domain.com/in/?" +
             "record_source=site" +
             "&event_type=brandclick" +
+            "&brand=" + encodeURIComponent(brandParam) + // ✅ brand from CTA URL
             "&gclid=" + encodeURIComponent(params.gclid) +
             "&campaignid=" + encodeURIComponent(params.campaignid) +
             "&page_url=" + encodeURIComponent(params.page_url) +
@@ -40,15 +50,17 @@ jQuery(document).ready(function($) {
             "&source=" + encodeURIComponent(params.source) +
             "&event_id=" + encodeURIComponent(params.event_id);
 
-        // --- Fire postback ---
-        $.ajax({
-            url: postbackUrl,
-            type: 'GET',
-            complete: function() {
-                // --- Open CTA link in new tab after postback ---
-                window.open(ctaUrl, '_blank');
-            }
-        });
+        // --- ✅ Send synchronous postback (blocking) ---
+        try {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", postbackUrl, false); // false = synchronous
+            xhr.send(null);
+        } catch (err) {
+            console.error("Postback failed:", err);
+        }
+
+        // --- ✅ Open CTA after postback (user-initiated) ---
+        window.open(ctaUrl, '_blank');
     });
 
 });
