@@ -35,7 +35,12 @@ if (isset($_GET['date_from']) && !empty($_GET['date_from'])) {
     $whereClauses[] = "`date` >= '$date_from'";
 }
 if (isset($_GET['date_to']) && !empty($_GET['date_to'])) {
-    $date_to = $mysqli->real_escape_string($_GET['date_to']);
+    $date_to_raw = $_GET['date_to'];
+    // Add 23:59:59 to include the entire day
+    if (strlen($date_to_raw) === 10) { // Format YYYY-MM-DD
+        $date_to_raw .= ' 23:59:59';
+    }
+    $date_to = $mysqli->real_escape_string($date_to_raw);
     $whereClauses[] = "`date` <= '$date_to'";
 }
 
