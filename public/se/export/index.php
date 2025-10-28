@@ -1,4 +1,5 @@
 <?php
+// export_se.php?code=12345&date_from=2025-10-01&date_to=2025-10-28
 require_once __DIR__ . '/../../../env.php';
 
 // Connect to MySQL
@@ -26,8 +27,29 @@ if ($inputCode !== $reportPass) {
 // Set the table name
 $tableName = 'se';
 
-// Query all data from the table
-$query = "SELECT * FROM `$tableName`";
+// Build query with optional date filter
+$whereClauses = [];
+if (isset($_GET['date_from']) && !empty($_GET['date_from'])) {
+    $date_from = $mysqli->real_escape_string($_GET['date_from']);
+    $whereClauses[] = "`date` >= '$date_from'";
+}
+if (isset($_GET['date_to']) && !empty($_GET['date_to'])) {
+    $date_to_raw = $_GET['date_to'];
+    // Add 23:59:59 to include the entire day
+    if (strlen($date_to_raw) === 10) { // Format YYYY-MM-DD
+        $date_to_raw .= ' 23:59:59';
+    }
+    $date_to = $mysqli->real_escape_string($date_to_raw);
+    $whereClauses[] = "`date` <= '$date_to'";
+}
+
+$whereSQL = '';
+if (!empty($whereClauses)) {
+    $whereSQL = 'WHERE ' . implode(' AND ', $whereClauses);
+}
+
+// Final query
+$query = "SELECT * FROM `$tableName` $whereSQL ORDER BY `date` DESC";
 $result = $mysqli->query($query);
 if (!$result) {
     die("Query failed: " . $mysqli->error);
@@ -53,3 +75,4 @@ while ($row = $result->fetch_assoc()) {
 fclose($output);
 $mysqli->close();
 exit;
+?>
