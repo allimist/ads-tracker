@@ -23,6 +23,10 @@
       align-items: center;
       gap: 6px;
     }
+    .chart-container {
+      width: 80%;
+      margin: 40px auto 0 auto;
+    }
     table {
       border-collapse: collapse;
       width: 80%;
@@ -113,11 +117,22 @@
     }
 
     echo "<h1>Landing Page CTR Report (31 days)</h1>";
+    $rows = [];
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $rows[] = $row;
+        }
+    }
+
+    echo '<div class="chart-container">';
+    echo '<canvas id="ctrChart" height="120"></canvas>';
+    echo '</div>';
+
     echo "<table>";
     echo "<tr><th>Date</th><th>Sessions</th><th>Clicks</th><th>LP CTR (%)</th></tr>";
 
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
+    if (!empty($rows)) {
+        foreach ($rows as $row) {
             echo "<tr>";
             echo "<td>" . htmlspecialchars($row['Date']) . "</td>";
             echo "<td>" . htmlspecialchars($row['Sessions']) . "</td>";
@@ -131,9 +146,15 @@
 
     echo "</table>";
 
+    $chartDates = array_reverse(array_column($rows, 'Date'));
+    $chartSessions = array_reverse(array_map('intval', array_column($rows, 'Sessions')));
+    $chartClicks = array_reverse(array_map('intval', array_column($rows, 'Clicks')));
+    $chartCtr = array_reverse(array_map('floatval', array_column($rows, 'CTR')));
+
     $mysqli->close();
   ?>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const toggle = document.getElementById('nightModeToggle');
     const body = document.body;
@@ -152,6 +173,83 @@
         localStorage.setItem('dark-mode', 'disabled');
       }
     });
+
+    const chartData = {
+      labels: <?php echo json_encode($chartDates ?? [], JSON_UNESCAPED_SLASHES); ?>,
+      datasets: [
+        {
+          label: 'LP CTR (%)',
+          data: <?php echo json_encode($chartCtr ?? [], JSON_UNESCAPED_SLASHES); ?>,
+          borderColor: '#ff6600',
+          backgroundColor: 'rgba(255, 102, 0, 0.2)',
+          tension: 0.25,
+          yAxisID: 'y',
+        },
+        {
+          label: 'Sessions',
+          data: <?php echo json_encode($chartSessions ?? [], JSON_UNESCAPED_SLASHES); ?>,
+          borderColor: '#3366cc',
+          backgroundColor: 'rgba(51, 102, 204, 0.1)',
+          tension: 0.2,
+          yAxisID: 'y1',
+          hidden: true,
+        },
+        {
+          label: 'Clicks',
+          data: <?php echo json_encode($chartClicks ?? [], JSON_UNESCAPED_SLASHES); ?>,
+          borderColor: '#28a745',
+          backgroundColor: 'rgba(40, 167, 69, 0.1)',
+          tension: 0.2,
+          yAxisID: 'y1',
+          hidden: true,
+        },
+      ],
+    };
+
+    const ctx = document.getElementById('ctrChart');
+    if (ctx && chartData.labels.length > 0) {
+      new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+            },
+          },
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          scales: {
+            y: {
+              type: 'linear',
+              position: 'left',
+              title: {
+                display: true,
+                text: 'LP CTR (%)',
+              },
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              grid: {
+                drawOnChartArea: false,
+              },
+              title: {
+                display: true,
+                text: 'Sessions / Clicks',
+              },
+            },
+          },
+        },
+      });
+    }
   </script>
 </body>
 </html>
